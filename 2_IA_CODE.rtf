@@ -1,0 +1,117 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 TimesNewRomanPSMT;\f1\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf2 Python Code\
+import cv2\
+import numpy as np from skimage.morphology import skeletonize import matplotlib.pyplot as plt import sys\
+def process_disease_detection (image) :\
+Finds diseased (non-green) areas and calculates the percentage of the leaf affected.\
+hsv_image = cv2.cvtColor(image, cv2. COLOR_BGR2HSV)\
+lower_green = np. array([25, 52, 72])\
+upper_green = np.array([102, 255, 255])\
+healthy_mask = cv2. inRange(hsv_image, lower_green, upper_green)\
+disease_mask = cv2.bitwise_not (healthy_mask)\
+result = cv2.bitwise_and (image, image, mask=disease_mask)\
+healthy_pixels = cv2.countNonZero(healthy_mask)\
+diseased_pixels = cv2. countNonZero(disease_mask)\
+total_leaf_pixels = healthy_pixels + diseased_pixels\
+percentage = 0.0\
+if total\
+_leaf_pixels > 0:\
+percentage = (diseased_pixels / total_leaf pixels) * 100\
+result_rgb = cv2.cvtColor(result, cv2. COLOR_BGRRGB)\
+return result_rgb, percentage, healthy_mask\
+def process_grayscale(image) :\
+11 11 18\
+Converts the image to grayscale.\
+80 10 18\
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+\f1 \cf0 \page 
+\f0 \cf2 return cv2. cvtColor(gray_image, cv2. COLOR_GRAY2RGB)\
+def process_top_hat (image, healthy_mask):\
+Applies Top-Hat transform to the healthy parts of the leaf.\
+BE BE SE\
+gray_image = cv2. cvtColor(image, cv2. COLOR_BGR2GRAY)\
+# Mask out diseased areas\
+healthy_gray = cv2.bitwise_and(gray_image, gray_image, mask=healthy_mask)\
+# Apply Top-Hat\
+kernel_size = (15, 15)\
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, kernel_size)\
+tophat = cv2.morphologyEx(healthy_gray, cv2.MORPH_TOPHAT, kernel)\
+return cv2.ctColor(tophat, cv2. COLOR_GRAY2RGB)\
+return cv2. ctColor(tophat, cv2.COLOR_GRAY2RGB)\
+def process_vein_skeleton (image, healthy_mask):\
+Runs the FULL pipeline: Grayscale -> Mask -> Top-Hat -> Threshold -> Skeleton\
+# 1. Grayscale and Mask\
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)\
+healthy_gray = cv2.bitwise_and(gray_image, gray_image, mask=healthy_mask)\
+# 2. Top-Hat (Internal step)\
+kernel_size = (15, 15)\
+kernel = cv2. getStructuringElement(cv2.MORPH_ELLIPSE, kernel_size)\
+tophat = cv2.morphologyExhealthy_gray, cv2. MORPH_TOPHAT, kernel)\
+# 3. Threshold\
+\uc0\u8594  thresh = cv2.threshold(tophat, 0, 255, cv2. THRESH_BINARY + cv2.THRESH_OTSU)\
+# 4. Skelet\
+ronize\
+binary_skeleton = skeletonize(thresh / 255)
+\f1 \cf0 \page 
+\f0 \cf2 skeleton = (binary_skeleton * 255). astype(np.uint8)\
+return cv2. cvtColor(skeleton, cv2. COLOR_GRAY2RGB)\
+Main execution block (No GUI)\
+_namel\
+main\
+# 1. Get image path from terminal\
+image_path = input("Enter the full path to your leaf image: ")\
+# 2. Load the image\
+image = cv2. imread (image_path)\
+if image is None:\
+print (f"Error: Could not load image from path: (image_path\}")\
+print("Please check the path and try again.")\
+sys.exit()\
+print ("Processing image, please wait..")\
+# 3. Run ALL processing functions\
+# Run disease detection first to get the mask\
+diseased_img_gb, percentage, healthy_mask = process_disease_detection(image. copy))\
+# Run the Sher processes\
+gray_img_gb = process_grayscale(image.copy())\
+tophat_img_gb = process_top_hat(image.copy), healthy_mask)\
+skeleton_img_gb = process_vein_skeleton(image. copy(), healthy_mask\
+# 4. Print percentage to terminal\
+print("--- Analysis Complete ---")\
+print (f"Disease Percentage: (percentage:. 2f\}%")\
+# 5. Display all results in a single plot\
+plt.figure(figsize=(15, 10))\
+# Plot 1: Original
+\f1 \cf0 \page 
+\f0 \cf2 plt.subplot (2, 3, 1)\
+plt.title('1. Original Image')\
+plt.imshow(cv2.cvtColor(image, cv2. COLOR_BGR2RGB))\
+plt. axis (' off')\
+# Plot 2: Diseased Area\
+plt.subplot(2, 3, 2)\
+plt.title('2. Diseased Area') plt. imshow(diseased_img_rgb)\
+plt.axis(' off')\
+# Plot 3: Grayscale\
+plt.subplot (2, 3, 3)\
+plt.title('3. Grayscale') plt. imshow(gray_img_rgb)\
+plt.axis (' off')\
+# Plot 4: Top-Hat\
+plt.subplot (2; 3, 4)\
+plt.title('4. Top-Hat (on Healthy Area) ') plt.imshow(tophat_img_rgb)\
+plt.axis(' off')\
+# Plot 5: Vein Skeleton\
+plt. subplot (2, 3, 5)\
+plt.title('5. Vein Skeleton (Final)') plt. imshow (skeleton_img_rgb)\
+plt. axis(' off')\
+# Plot 6: Percentage Text\
+plt.subplot (2, 3, 6)\
+plt.title('6. Analysis Result')\
+plt.text (0.5, 0.5, f'Disease Percentage: \\n\{percentage: 2f\}%, horizontalalignment='center',\
+verticalalignment=' center', fontsize=16, color= green')\
+plt. axis(' off')\
+plt.tight.\
+_Layout ()}
